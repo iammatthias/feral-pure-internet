@@ -1,0 +1,10 @@
+{
+  "name": "feral-pure-internet",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @feral/app dev",
+    "build": "pnpm --filter @feral/app build",
+    "start": "pnpm --filter @feral/app start"
+  }
+}

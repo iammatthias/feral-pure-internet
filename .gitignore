@@ -1,0 +1,16 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Environment
+.env
+
+# Build
+dist
+
+# Cache
+packages/app/cache/
+
+# System
+.DS_Store
+*.log

@@ -1,0 +1,15 @@
+name: Deploy to RPi
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deployment webhook
+        run: |
+          curl -X POST \
+          -H "x-hub-signature-256: $(echo -n ${{ github.event.head_commit.id }} | openssl sha256 -hmac ${{ secrets.WEBHOOK_SECRET }})" \
+          ${{ secrets.DEPLOY_URL }}/deploy
