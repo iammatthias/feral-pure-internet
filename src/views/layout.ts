@@ -2,8 +2,11 @@ export const layout = (content: string) => `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Feral Pure Internet</title>
+    <title>feral.pure---internet.com</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="feral.pure---internet.com">
+    <meta name="author" content="Matthias Jordan">
+    <meta name="robots" content="noindex, nofollow">
     <style>
       * {
         margin: 0;
