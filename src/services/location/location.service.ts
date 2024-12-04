@@ -1,6 +1,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
+const EARTH_RADIUS_MILES = 3959; // Earth's radius in miles
+const FUZZ_RADIUS_MILES = 20; // Maximum fuzzing radius in miles reduced from 50 to 20
+
 export interface LocationData {
   latitude: number;
   longitude: number;
@@ -9,6 +12,18 @@ export interface LocationData {
   country_name: string;
   timezone: string;
   lastUpdated?: number;
+}
+
+// Add interface for ip-api.com response
+interface IpApiResponse {
+  status: string;
+  lat: number;
+  lon: number;
+  city: string;
+  regionName: string;
+  country: string;
+  timezone: string;
+  message?: string;
 }
 
 export class LocationService {
@@ -55,40 +70,70 @@ export class LocationService {
     }
   }
 
+  private fuzzLocation(lat: number, lon: number): { latitude: number; longitude: number } {
+    // Generate a random distance up to FUZZ_RADIUS_MILES
+    const radiusMiles = Math.random() * FUZZ_RADIUS_MILES;
+
+    // Generate a random angle in radians
+    const angle = Math.random() * 2 * Math.PI;
+
+    // Convert distance to angular distance (radians)
+    const angularDistance = radiusMiles / EARTH_RADIUS_MILES;
+
+    // Calculate fuzzy position using spherical geometry
+    const lat1 = lat * (Math.PI / 180); // convert to radians
+    const lon1 = lon * (Math.PI / 180);
+
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(angularDistance) + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(angle)
+    );
+
+    const lon2 =
+      lon1 +
+      Math.atan2(
+        Math.sin(angle) * Math.sin(angularDistance) * Math.cos(lat1),
+        Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
+      );
+
+    // Convert back to degrees and normalize longitude to [-180, 180]
+    return {
+      latitude: lat2 * (180 / Math.PI),
+      longitude: ((lon2 * (180 / Math.PI) + 540) % 360) - 180,
+    };
+  }
+
   private async updateLocation(): Promise<LocationData> {
     try {
       console.log("Attempting to update location data...");
-      const response = await fetch("https://ipapi.co/json/");
+      // Using ip-api.com with specific fields to minimize response size
+      const response = await fetch(
+        "http://ip-api.com/json/?fields=status,message,lat,lon,city,regionName,country,timezone"
+      );
 
-      if (response.status === 429) {
-        console.log("Rate limited by ipapi.co, using cache");
-        if (this.cache) {
-          return this.cache;
-        }
-        throw new Error("Rate limited and no cache available");
+      const data: IpApiResponse = await response.json();
+
+      if (data.status !== "success") {
+        throw new Error(`Location API error: ${data.message || "Unknown error"}`);
       }
 
-      if (!response.ok) {
-        throw new Error(`Location API error (${response.status}): ${await response.text()}`);
-      }
-
-      const data = await response.json();
-      //   console.log("Received new location data:", data);
       console.log("Received new location data:");
 
+      // Fuzz the coordinates before storing
+      const fuzzedCoords = this.fuzzLocation(data.lat, data.lon);
+
       const locationData: LocationData = {
-        latitude: data.latitude,
-        longitude: data.longitude,
+        latitude: fuzzedCoords.latitude,
+        longitude: fuzzedCoords.longitude,
         city: data.city,
-        region: data.region,
-        country_name: data.country_name,
+        region: data.regionName,
+        country_name: data.country,
         timezone: data.timezone,
         lastUpdated: Date.now(),
       };
 
       this.cache = locationData;
       this.saveCache();
-      console.log("Location data updated and cached");
+      console.log("Location data updated and cached (coordinates fuzzed)");
       return locationData;
     } catch (error) {
       console.error("Error updating location:", error);
@@ -107,7 +152,8 @@ export class LocationService {
     }
 
     const cacheAge = Date.now() - this.cache.lastUpdated;
-    const shouldUpdate = cacheAge > 24 * 60 * 60 * 1000; // 24 hours
+    // Reduced update frequency to stay within rate limits
+    const shouldUpdate = cacheAge > 2 * 60 * 60 * 1000; // 2 hours
     console.log("Cache age:", Math.round(cacheAge / (60 * 1000)), "minutes,", "Update needed:", shouldUpdate);
     return shouldUpdate;
   }
