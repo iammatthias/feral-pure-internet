@@ -65,7 +65,8 @@ export class EcosystemData {
   }
 
   private obfuscateCoordinate(coord: number): number {
-    return Math.round(coord * 10) / 10;
+    const jitter = (Math.random() - 0.5) * 0.02; // ±0.01° random noise
+    return Math.round((coord + jitter) * 100) / 100;
   }
 
   private saveCache() {
