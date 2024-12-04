@@ -4,15 +4,15 @@ export const renderEcosystem = (data: EnvironmentalData) => `
     <div class="grid">
       <div class="card">
         <div class="card-title">🌍 Region</div>
-        ${data.location.region}, ${data.location.country}
+        <div class="card-content">${data.location.region}, ${data.location.country}</div>
       </div>
       <div class="card">
         <div class="card-title">📍 Coordinates</div>
-        ${data.location.latitude}°, ${data.location.longitude}°
+        <div class="card-content">${data.location.latitude}°, ${data.location.longitude}°</div>
       </div>
       <div class="card">
         <div class="card-title">⛰️ Elevation</div>
-        ${data.location.elevation}m
+        <div class="card-content">${data.location.elevation}m</div>
       </div>
     </div>
 
@@ -20,28 +20,28 @@ export const renderEcosystem = (data: EnvironmentalData) => `
     <div class="grid">
       <div class="card">
         <div class="card-title">🌡️ Temperature</div>
-        ${data.weather.temperature}°C
-        <small>Feels like ${data.weather.feelsLike}°C</small>
+        <div class="card-content">${data.weather.temperature}°C<br/>
+        <small>Feels like ${data.weather.feelsLike}°C</small></div>
       </div>
       <div class="card">
         <div class="card-title">🌥️ Conditions</div>
-        ${data.weather.condition}
+        <div class="card-content">${data.weather.condition}</div>
       </div>
       <div class="card">
         <div class="card-title">💨 Wind</div>
-        ${data.weather.windSpeed}km/h ${data.weather.windDirection}
+        <div class="card-content">${data.weather.windSpeed}km/h ${data.weather.windDirection}</div>
       </div>
       <div class="card">
         <div class="card-title">💧 Humidity</div>
-        ${data.weather.humidity}%
+        <div class="card-content">${data.weather.humidity}%</div>
       </div>
       <div class="card">
         <div class="card-title">📊 Pressure</div>
-        ${data.weather.pressure}hPa
+        <div class="card-content">${data.weather.pressure}hPa</div>
       </div>
       <div class="card">
         <div class="card-title">☔️ Precipitation</div>
-        ${data.weather.precipitationProbability}%
+        <div class="card-content">${data.weather.precipitationProbability}%</div>
       </div>
     </div>
 
@@ -49,19 +49,19 @@ export const renderEcosystem = (data: EnvironmentalData) => `
     <div class="grid">
       <div class="card">
         <div class="card-title">💨 AQI</div>
-        ${data.air.aqi}
+        <div class="card-content">${data.air.aqi}</div>
       </div>
       <div class="card">
         <div class="card-title">🔬 Particulates</div>
-        PM2.5: ${data.air.pm25}μg/m³
-        <small>PM10: ${data.air.pm10}μg/m³</small>
+        <div class="card-content">PM2.5: ${data.air.pm25}μg/m³<br/>
+        <small>PM10: ${data.air.pm10}μg/m³</small></div>
       </div>
       <div class="card">
         <div class="card-title">🧪 Gases</div>
-        O₃: ${data.air.o3}μg/m³
-        <small>NO₂: ${data.air.no2}μg/m³</small>
-        <small>SO₂: ${data.air.so2}μg/m³</small>
-        <small>CO: ${data.air.co}μg/m³</small>
+        <div class="card-content">O₃: ${data.air.o3}μg/m³<br/>
+        <small>NO₂: ${data.air.no2}μg/m³</small><br/>
+        <small>SO₂: ${data.air.so2}μg/m³</small><br/>
+        <small>CO: ${data.air.co}μg/m³</small></div>
       </div>
     </div>
 
@@ -69,16 +69,16 @@ export const renderEcosystem = (data: EnvironmentalData) => `
     <div class="grid">
       <div class="card">
         <div class="card-title">🌅 Daylight</div>
-        ${data.astronomy.sunrise} - ${data.astronomy.sunset}
-        <small>Length: ${data.astronomy.dayLength}</small>
+        <div class="card-content">${data.astronomy.sunrise} - ${data.astronomy.sunset}<br/>
+        <small>Length: ${data.astronomy.dayLength}</small></div>
       </div>
       <div class="card">
         <div class="card-title">🌙 Moon</div>
-        ${data.astronomy.moonPhase}
+        <div class="card-content">${data.astronomy.moonPhase}</div>
       </div>
       <div class="card">
         <div class="card-title">☀️ UV Index</div>
-        ${data.weather.uvIndex}
+        <div class="card-content">${data.weather.uvIndex}</div>
       </div>
     </div>
 

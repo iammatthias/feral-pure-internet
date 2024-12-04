@@ -8,8 +8,9 @@ export const layout = (content: string) => `
     <meta name="author" content="Matthias Jordan">
     <meta name="robots" content="noindex, nofollow">
     <style>
-    :root {
-  color-scheme: light dark;
+      :root {
+        color-scheme: light dark;
+        font-size: 16px;
       }
 
       * {
@@ -23,11 +24,16 @@ export const layout = (content: string) => `
         margin: 0;
         padding: 2rem;
         font-family: monospace;
+        line-height: 1.5;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         color: light-dark(#2a2a2a, #f0f0f0);
         background: light-dark(#f0f0f0, #1a1a1a);
+      }
+
+      p, ul, ol {
+        max-width: 600px;
       }
 
       a {
@@ -46,7 +52,7 @@ export const layout = (content: string) => `
         padding-left: 1rem;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 1rem;
       }
 
       .grid {
@@ -67,6 +73,10 @@ export const layout = (content: string) => `
         display: flex;
         align-items: center;
         gap: 0.5rem;
+      }
+
+      .card-content {
+        font-size: 0.8rem;
       }
 
       h2, h3 {
