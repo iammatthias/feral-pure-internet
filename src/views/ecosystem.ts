@@ -1,8 +1,5 @@
 export const renderEcosystem = (data: EnvironmentalData) => `
-    <p>Last checked: ${new Intl.DateTimeFormat(undefined, {
-      dateStyle: "short",
-      timeStyle: "medium",
-    }).format(data.lastChecked)}</p>
+    <p>Last checked: <span class="timestamp" data-time="${data.lastChecked}"></span></p>
     <h4>Location Data</h4>
     <div class="grid">
       <div class="card">

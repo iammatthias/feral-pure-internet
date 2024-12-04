@@ -77,5 +77,10 @@ export const layout = (content: string) => `
     </style>
   </head>
   <body>${content}</body>
+  <script>
+    document.querySelectorAll('.timestamp').forEach(el => {
+      el.textContent = new Date(parseInt(el.dataset.time)).toLocaleString();
+    });
+  </script>
 </html>
 `;
