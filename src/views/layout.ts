@@ -1,4 +1,4 @@
-export const layout = (content: string) => `
+export const layout = (content: string) => ` 
 <!DOCTYPE html>
 <html>
   <head>

@@ -1,8 +1,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import suncalc from "suncalc";
+import { LocationService } from "../location/location.service";
 
-interface EnvironmentalData {
+export interface EnvironmentalData {
   location: {
     latitude: number;
     longitude: number;
@@ -41,25 +42,28 @@ interface EnvironmentalData {
   lastChecked: number;
 }
 
-export class EcosystemData {
+export class EnvironmentService {
   private cache: EnvironmentalData | null = null;
-  private readonly CACHE_FILE = join(__dirname, "../cache/ecosystem.json");
-  private readonly UPDATE_INTERVAL = 10 * 60 * 1000;
+  private readonly CACHE_FILE = join(__dirname, "../../../cache/ecosystem.json");
+  private readonly UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  private updatePromise: Promise<EnvironmentalData> | null = null;
 
-  constructor() {
-    const cacheDir = join(__dirname, "../cache");
+  constructor(private locationService: LocationService) {
+    const cacheDir = join(__dirname, "../../../cache");
     if (!existsSync(cacheDir)) {
       mkdirSync(cacheDir, { recursive: true });
     }
+    this.loadCache();
+    this.updatePromise = this.updateEnvironment();
+    this.startUpdateCycle();
+  }
+
+  private loadCache() {
     try {
       this.cache = JSON.parse(readFileSync(this.CACHE_FILE, "utf-8"));
     } catch {
       this.cache = null;
     }
-  }
-
-  private obfuscateCoordinate(coord: number): number {
-    return Math.round(coord * 10) / 10;
   }
 
   private saveCache() {
@@ -124,29 +128,19 @@ export class EcosystemData {
     return phases[Math.round(phase * 8) % 8];
   }
 
-  private formatDayLength(ms: number): string {
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
+  private formatDayLength(milliseconds: number): string {
+    const hours = Math.floor(milliseconds / 3600000);
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
     return `${hours}h ${minutes}m`;
   }
 
-  async getData(): Promise<EnvironmentalData> {
-    if (this.cache && Date.now() - this.cache.lastChecked < this.UPDATE_INTERVAL) {
-      return this.cache;
-    }
-
+  private async updateEnvironment(): Promise<EnvironmentalData> {
     try {
-      const locationRes = await fetch("https://ipapi.co/json/");
-      const locationData = await locationRes.json();
-
-      const preciseCoords = {
-        lat: locationData.latitude,
-        lon: locationData.longitude,
-      };
+      const locationData = await this.locationService.getLocation();
 
       const weatherRes = await fetch(
         `https://api.open-meteo.com/v1/forecast?` +
-          `latitude=${preciseCoords.lat}&longitude=${preciseCoords.lon}&` +
+          `latitude=${locationData.latitude}&longitude=${locationData.longitude}&` +
           `current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&` +
           `hourly=pressure_msl,uv_index,visibility,precipitation_probability&` +
           `forecast_days=1&` +
@@ -158,7 +152,6 @@ export class EcosystemData {
       }
 
       const weatherData = await weatherRes.json();
-      // console.log("Weather API Response:", JSON.stringify(weatherData, null, 2));
 
       let airQuality = {
         aqi: 0,
@@ -172,7 +165,7 @@ export class EcosystemData {
 
       try {
         const airRes = await fetch(
-          `https://api.waqi.info/feed/geo:${preciseCoords.lat};${preciseCoords.lon}/` +
+          `https://api.waqi.info/feed/geo:${locationData.latitude};${locationData.longitude}/` +
             `?token=${process.env.WAQI_TOKEN}`
         );
         const airData = await airRes.json();
@@ -192,13 +185,16 @@ export class EcosystemData {
         console.error("Error fetching air quality data:", error);
       }
 
-      const times = suncalc.getTimes(new Date(), preciseCoords.lat, preciseCoords.lon);
-      const moonIllum = suncalc.getMoonIllumination(new Date());
+      const now = new Date();
+      const times = suncalc.getTimes(now, locationData.latitude, locationData.longitude);
+      const moonIllum = suncalc.getMoonIllumination(now);
+
+      const dayLengthMs = times.sunset.getTime() - times.sunrise.getTime();
 
       this.cache = {
         location: {
-          latitude: this.obfuscateCoordinate(preciseCoords.lat),
-          longitude: this.obfuscateCoordinate(preciseCoords.lon),
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
           region: `${locationData.city}, ${locationData.region}`,
           country: locationData.country_name,
           timezone: locationData.timezone,
@@ -221,7 +217,7 @@ export class EcosystemData {
           sunrise: times.sunrise.toLocaleTimeString(),
           sunset: times.sunset.toLocaleTimeString(),
           moonPhase: this.getMoonPhase(moonIllum.phase),
-          dayLength: this.formatDayLength(times.sunset - times.sunrise),
+          dayLength: this.formatDayLength(dayLengthMs),
         },
         lastChecked: Date.now(),
       };
@@ -229,11 +225,27 @@ export class EcosystemData {
       this.saveCache();
       return this.cache;
     } catch (error) {
-      console.error("Error fetching ecosystem data:", error);
+      console.error("Error updating environment:", error);
       if (this.cache) {
         return this.cache;
       }
       throw error;
     }
+  }
+
+  private startUpdateCycle() {
+    setInterval(() => {
+      this.updatePromise = this.updateEnvironment();
+    }, this.UPDATE_INTERVAL);
+  }
+
+  async getEnvironment(): Promise<EnvironmentalData> {
+    if (!this.cache) {
+      if (!this.updatePromise) {
+        this.updatePromise = this.updateEnvironment();
+      }
+      return this.updatePromise;
+    }
+    return this.cache;
   }
 }
