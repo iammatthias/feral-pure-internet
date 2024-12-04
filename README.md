@@ -2,7 +2,7 @@
 
 This is an exploration of "pure internet". The notion that things have been complicated by the internet as a service, and that the halcyon days of sharing simple hypertext are gone only as long as we allow.
 
-## Previous explorations
+## Previous
 
 - NFC
   -- https://iammatthias.com/posts/1732585567703-pure-internet-bluesky
@@ -10,10 +10,6 @@ This is an exploration of "pure internet". The notion that things have been comp
 - Bluesky
   -- https://iammatthias.com/posts/1732585567703-pure-internet-bluesky
   -- This was a fun experiment inspired by [Daniel Mangum's prior work](https://danielmangum.com/posts/this-website-is-hosted-on-bluesky/). It leverages a few pieces of Bluesky's underlying AtProtocol, namely the Personal Data Server (PDS) and content addressable blob storage.
-
-## This exploration
-
-This is a monorepo built with pnpm workspaces, and is deployed to a Raspberry Pi Zero W.
 
 ## Local Development
 
