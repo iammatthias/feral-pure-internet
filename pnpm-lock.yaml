@@ -6,9 +6,7 @@ settings:
 
 importers:
 
-  .: {}
-
-  packages/app:
+  .:
     dependencies:
       '@hono/node-server':
         specifier: ^1.0.0
@@ -23,18 +21,6 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0
     devDependencies:
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.17.9
-      tsx:
-        specifier: ^4.0.0
-        version: 4.19.2
-      typescript:
-        specifier: ^5.0.0
-        version: 5.7.2
-
-  packages/scripts:
-    dependencies:
       '@types/node':
         specifier: ^20.0.0
         version: 20.17.9
