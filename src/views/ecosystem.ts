@@ -1,5 +1,8 @@
 export const renderEcosystem = (data: EnvironmentalData) => `
-    <p>Last checked: ${new Date(data.lastChecked).toLocaleString()}</p>
+    <p>Last checked: ${new Date(data.lastChecked).toLocaleString(undefined, {
+      dateStyle: "short",
+      timeStyle: "medium",
+    })}</p>
     <h4>Location Data</h4>
     <div class="grid">
       <div class="card">
