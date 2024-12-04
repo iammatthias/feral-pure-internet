@@ -1,6 +1,4 @@
-# Pure Internet
-
-## Feral
+# feral.pure---internet.com
 
 This is an exploration of "pure internet".
 
