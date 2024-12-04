@@ -207,142 +207,137 @@ export class EcosystemData {
   }
 
   async getData(): Promise<EnvironmentalData> {
+    let locationData;
+
+    // Use cached location data if available and recent
     if (this.cache && Date.now() - this.cache.lastChecked < this.UPDATE_INTERVAL) {
-      return this.cache;
+      locationData = {
+        latitude: this.cache.location.latitude,
+        longitude: this.cache.location.longitude,
+        city: this.cache.location.region.split(",")[0].trim(),
+        region: this.cache.location.region.split(",")[1].trim(),
+        country_name: this.cache.location.country,
+        timezone: this.cache.location.timezone,
+      };
+    } else {
+      // Fetch fresh location data
+      const locationRes = await fetch("https://ipapi.co/json/");
+      locationData = await locationRes.json();
     }
+
+    const preciseCoords = {
+      lat: locationData.latitude,
+      lon: locationData.longitude,
+    };
+
+    console.log("Preparing weather data request...");
+    const weatherUrl = new URL("https://api.open-meteo.com/v1/forecast");
+
+    console.log("Using location:", {
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+    });
+
+    const params = {
+      latitude: locationData.latitude.toString(),
+      longitude: locationData.longitude.toString(),
+      current: [
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "weather_code",
+        "apparent_temperature",
+      ].join(","),
+      hourly: ["pressure_msl", "uv_index", "visibility", "precipitation_probability"].join(","),
+    };
+
+    Object.entries(params).forEach(([key, value]) => {
+      weatherUrl.searchParams.append(key, value);
+      console.log(`Added parameter ${key}:`, value);
+    });
+
+    console.log("Weather API URL:", weatherUrl.toString());
+
+    const weatherResponse = await this.fetchWithRetry(weatherUrl, {
+      retries: 3,
+      timeout: 10000,
+      delay: 3000,
+      validateResponse: true,
+    });
+
+    const weatherData = await weatherResponse.json();
+    console.log("Weather data response structure:", Object.keys(weatherData));
+
+    let airQuality = {
+      aqi: 0,
+      pm25: 0,
+      pm10: 0,
+      o3: 0,
+      no2: 0,
+      so2: 0,
+      co: 0,
+    };
 
     try {
-      const locationRes = await fetch("https://ipapi.co/json/");
-      const locationData = await locationRes.json();
+      const airRes = await fetch(
+        `https://api.waqi.info/feed/geo:${preciseCoords.lat};${preciseCoords.lon}/` + `?token=${process.env.WAQI_TOKEN}`
+      );
+      const airData = await airRes.json();
 
-      const preciseCoords = {
-        lat: locationData.latitude,
-        lon: locationData.longitude,
-      };
-
-      console.log("Preparing weather data request...");
-      const weatherUrl = new URL("https://api.open-meteo.com/v1/forecast");
-
-      console.log("Using location:", {
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-      });
-
-      const params = {
-        latitude: locationData.latitude.toString(),
-        longitude: locationData.longitude.toString(),
-        current: [
-          "temperature_2m",
-          "relative_humidity_2m",
-          "precipitation",
-          "wind_speed_10m",
-          "wind_direction_10m",
-          "weather_code",
-          "apparent_temperature",
-        ].join(","),
-        hourly: ["pressure_msl", "uv_index", "visibility", "precipitation_probability"].join(","),
-      };
-
-      Object.entries(params).forEach(([key, value]) => {
-        weatherUrl.searchParams.append(key, value);
-        console.log(`Added parameter ${key}:`, value);
-      });
-
-      console.log("Weather API URL:", weatherUrl.toString());
-
-      const weatherResponse = await this.fetchWithRetry(weatherUrl, {
-        retries: 3,
-        timeout: 10000,
-        delay: 3000,
-        validateResponse: true,
-      });
-
-      const weatherData = await weatherResponse.json();
-      console.log("Weather data response structure:", Object.keys(weatherData));
-
-      let airQuality = {
-        aqi: 0,
-        pm25: 0,
-        pm10: 0,
-        o3: 0,
-        no2: 0,
-        so2: 0,
-        co: 0,
-      };
-
-      try {
-        const airRes = await fetch(
-          `https://api.waqi.info/feed/geo:${preciseCoords.lat};${preciseCoords.lon}/` +
-            `?token=${process.env.WAQI_TOKEN}`
-        );
-        const airData = await airRes.json();
-
-        if (airData.status === "ok") {
-          airQuality = {
-            aqi: airData.data.aqi || 0,
-            pm25: airData.data.iaqi?.pm25?.v || 0,
-            pm10: airData.data.iaqi?.pm10?.v || 0,
-            o3: airData.data.iaqi?.o3?.v || 0,
-            no2: airData.data.iaqi?.no2?.v || 0,
-            so2: airData.data.iaqi?.so2?.v || 0,
-            co: airData.data.iaqi?.co?.v || 0,
-          };
-        }
-      } catch (error) {
-        console.error("Error fetching air quality data:", error);
+      if (airData.status === "ok") {
+        airQuality = {
+          aqi: airData.data.aqi || 0,
+          pm25: airData.data.iaqi?.pm25?.v || 0,
+          pm10: airData.data.iaqi?.pm10?.v || 0,
+          o3: airData.data.iaqi?.o3?.v || 0,
+          no2: airData.data.iaqi?.no2?.v || 0,
+          so2: airData.data.iaqi?.so2?.v || 0,
+          co: airData.data.iaqi?.co?.v || 0,
+        };
       }
-
-      const times: SunCalcTimes = suncalc.getTimes(new Date(), preciseCoords.lat, preciseCoords.lon);
-      const moonIllum = suncalc.getMoonIllumination(new Date());
-
-      const dayLengthMs: number = times.sunset.getTime() - times.sunrise.getTime();
-
-      this.cache = {
-        location: {
-          latitude: this.obfuscateCoordinate(preciseCoords.lat),
-          longitude: this.obfuscateCoordinate(preciseCoords.lon),
-          region: `${locationData.city}, ${locationData.region}`,
-          country: locationData.country_name,
-          timezone: locationData.timezone,
-          elevation: weatherData.elevation || 0,
-        },
-        weather: {
-          temperature: weatherData.current.temperature_2m,
-          feelsLike: weatherData.current.apparent_temperature,
-          humidity: weatherData.current.relative_humidity_2m,
-          pressure: weatherData.hourly.pressure_msl[0],
-          windSpeed: weatherData.current.wind_speed_10m,
-          windDirection: this.getWindDirection(weatherData.current.wind_direction_10m),
-          condition: this.getWeatherCondition(weatherData.current.weather_code),
-          uvIndex: weatherData.hourly.uv_index[0],
-          visibility: weatherData.hourly.visibility[0] / 1000,
-          precipitationProbability: weatherData.hourly.precipitation_probability[0],
-        },
-        air: airQuality,
-        astronomy: {
-          sunrise: times.sunrise.toLocaleTimeString(),
-          sunset: times.sunset.toLocaleTimeString(),
-          moonPhase: this.getMoonPhase(moonIllum.phase),
-          dayLength: this.formatDayLength(dayLengthMs),
-        },
-        lastChecked: Date.now(),
-      };
-
-      this.saveCache();
-      return this.cache;
-    } catch (error: unknown) {
-      console.error("Error in getData:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        cause: error instanceof Error ? error.cause : undefined,
-        stack: error instanceof Error ? error.stack : undefined,
-        type: error instanceof Error ? error.name : typeof error,
-      });
-
-      if (this.cache) {
-        console.log("Returning stale cache due to error");
-        return this.cache;
-      }
-      throw error;
+    } catch (error) {
+      console.error("Error fetching air quality data:", error);
     }
+
+    const times: SunCalcTimes = suncalc.getTimes(new Date(), preciseCoords.lat, preciseCoords.lon);
+    const moonIllum = suncalc.getMoonIllumination(new Date());
+
+    const dayLengthMs: number = times.sunset.getTime() - times.sunrise.getTime();
+
+    this.cache = {
+      location: {
+        latitude: this.obfuscateCoordinate(preciseCoords.lat),
+        longitude: this.obfuscateCoordinate(preciseCoords.lon),
+        region: `${locationData.city}, ${locationData.region}`,
+        country: locationData.country_name,
+        timezone: locationData.timezone,
+        elevation: weatherData.elevation || 0,
+      },
+      weather: {
+        temperature: weatherData.current.temperature_2m,
+        feelsLike: weatherData.current.apparent_temperature,
+        humidity: weatherData.current.relative_humidity_2m,
+        pressure: weatherData.hourly.pressure_msl[0],
+        windSpeed: weatherData.current.wind_speed_10m,
+        windDirection: this.getWindDirection(weatherData.current.wind_direction_10m),
+        condition: this.getWeatherCondition(weatherData.current.weather_code),
+        uvIndex: weatherData.hourly.uv_index[0],
+        visibility: weatherData.hourly.visibility[0] / 1000,
+        precipitationProbability: weatherData.hourly.precipitation_probability[0],
+      },
+      air: airQuality,
+      astronomy: {
+        sunrise: times.sunrise.toLocaleTimeString(),
+        sunset: times.sunset.toLocaleTimeString(),
+        moonPhase: this.getMoonPhase(moonIllum.phase),
+        dayLength: this.formatDayLength(dayLengthMs),
+      },
+      lastChecked: Date.now(),
+    };
+
+    this.saveCache();
+    return this.cache;
   }
 }
