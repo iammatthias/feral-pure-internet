@@ -10,7 +10,6 @@ export const layout = (content: string) => `
     <style>
       :root {
         color-scheme: light dark;
-        font-size: 16px;
       }
 
       * {
@@ -38,6 +37,7 @@ export const layout = (content: string) => `
 
       a {
         color: light-dark(blue, pink);
+        word-break: break-all;
       }
 
       a:hover {
@@ -73,10 +73,6 @@ export const layout = (content: string) => `
         display: flex;
         align-items: center;
         gap: 0.5rem;
-      }
-
-      .card-content {
-        font-size: 0.8rem;
       }
 
       h2, h3 {
