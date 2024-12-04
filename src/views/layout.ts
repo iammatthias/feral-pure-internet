@@ -8,6 +8,10 @@ export const layout = (content: string) => `
     <meta name="author" content="Matthias Jordan">
     <meta name="robots" content="noindex, nofollow">
     <style>
+    :root {
+  color-scheme: light dark;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -22,6 +26,20 @@ export const layout = (content: string) => `
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        color: light-dark(#2a2a2a, #e0e0e0);
+        background: light-dark(#e0e0e0, #1a1a1a);
+      }
+
+      a {
+        color: light-dark(blue, pink);
+      }
+
+      a:hover {
+        color: light-dark(blue, pink);
+      }
+
+      a:visited {
+        color: light-dark(purple, orange);
       }
 
       ul, ol {
@@ -49,15 +67,10 @@ export const layout = (content: string) => `
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        opacity: 0.7;
       }
 
       h2, h3 {
         margin-top: 0.5rem;
-      }
-
-      small {
-        opacity: 0.7;
       }
 
       @media (max-width: 900px) {
