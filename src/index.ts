@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { marked } from "marked";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { verifySignature, deploy } from "./deploy";
 import { EcosystemData } from "./ecosystem";
 import { layout } from "./views/layout";
 import { renderEcosystem } from "./views/ecosystem";
@@ -23,18 +22,6 @@ app.get("/", async (c) => {
      ${marked(etc)}
   `)
   );
-});
-
-app.post("/deploy", async (c) => {
-  const signature = c.req.header("x-hub-signature-256");
-  const body = await c.req.text();
-
-  if (!signature || !verifySignature(signature, body)) {
-    return c.text("Invalid signature", 401);
-  }
-
-  deploy();
-  return c.text("Deployment started");
 });
 
 serve(app, (info) => {
