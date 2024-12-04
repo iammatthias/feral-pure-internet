@@ -26,8 +26,8 @@ export const layout = (content: string) => `
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        color: light-dark(#2a2a2a, #e0e0e0);
-        background: light-dark(#e0e0e0, #1a1a1a);
+        color: light-dark(#2a2a2a, #f0f0f0);
+        background: light-dark(#f0f0f0, #1a1a1a);
       }
 
       a {
@@ -57,7 +57,7 @@ export const layout = (content: string) => `
 
       .card {
         padding: 1rem;
-        border: 1px solid #eee;
+        border: 1px solid light-dark(#2a2a2a, #f0f0f0);
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
