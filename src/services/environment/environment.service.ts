@@ -225,7 +225,8 @@ export class EnvironmentService {
             co: airData.data.iaqi?.co?.v || 0,
           };
 
-          console.log("Parsed air quality data:", airQuality);
+          //   console.log("Parsed air quality data:", airQuality);
+          console.log("Parsed air quality data");
         } else {
           console.warn("Invalid air quality data format:", airData);
         }

@@ -1,6 +1,6 @@
 export const renderEcosystem = (data: EnvironmentalData) => `
     <p>Last checked: ${new Date(data.lastChecked).toLocaleString()}</p>
-    <h3>Location Data</h3>
+    <h4>Location Data</h4>
     <div class="grid">
       <div class="card">
         <div class="card-title">🌍 Region</div>
@@ -16,7 +16,7 @@ export const renderEcosystem = (data: EnvironmentalData) => `
       </div>
     </div>
 
-    <h3>Weather</h3>
+    <h4>Weather</h4>
     <div class="grid">
       <div class="card">
         <div class="card-title">🌡️ Temperature</div>
@@ -45,7 +45,7 @@ export const renderEcosystem = (data: EnvironmentalData) => `
       </div>
     </div>
 
-    <h3>Air Quality</h3>
+    <h4>Air Quality</h4>
     <div class="grid">
       <div class="card">
         <div class="card-title">💨 AQI</div>
@@ -65,7 +65,7 @@ export const renderEcosystem = (data: EnvironmentalData) => `
       </div>
     </div>
 
-    <h3>Celestial</h3>
+    <h4>Celestial</h4>
     <div class="grid">
       <div class="card">
         <div class="card-title">🌅 Daylight</div>

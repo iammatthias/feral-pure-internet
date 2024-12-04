@@ -1,4 +1,4 @@
-## Etc
+### Etc
 
 - NFC: https://iammatthias.com/posts/1732585567703-pure-internet-bluesky
   -- The idea here was simple. Store a data URL on an NFC tag. When scanned, the data URL is loaded in the browser. This fell apart because data URLs are not supported for top level navigation. The solution was to host minimal HTML on IPFS, and use JS to bootstrap a data URL from a url param into an iframe.
