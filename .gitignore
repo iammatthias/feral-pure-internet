@@ -9,7 +9,7 @@ node_modules
 dist
 
 # Cache
-packages/app/cache/
+cache
 
 # System
 .DS_Store
