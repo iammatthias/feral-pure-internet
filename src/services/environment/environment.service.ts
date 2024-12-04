@@ -3,6 +3,39 @@ import { join } from "path";
 import suncalc from "suncalc";
 import { LocationService } from "../location/location.service";
 
+interface WeatherAPIResponse {
+  current: {
+    temperature_2m: number;
+    apparent_temperature: number;
+    relative_humidity_2m: number;
+    weather_code: number;
+    wind_speed_10m: number;
+    wind_direction_10m: number;
+  };
+  hourly: {
+    pressure_msl: number[];
+    uv_index: number[];
+    visibility: number[];
+    precipitation_probability: number[];
+  };
+  elevation?: number;
+}
+
+interface AirQualityAPIResponse {
+  status: string;
+  data: {
+    aqi: number;
+    iaqi: {
+      pm25?: { v: number };
+      pm10?: { v: number };
+      o3?: { v: number };
+      no2?: { v: number };
+      so2?: { v: number };
+      co?: { v: number };
+    };
+  };
+}
+
 export interface EnvironmentalData {
   location: {
     latitude: number;
@@ -138,20 +171,27 @@ export class EnvironmentService {
     try {
       const locationData = await this.locationService.getLocation();
 
-      const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?` +
-          `latitude=${locationData.latitude}&longitude=${locationData.longitude}&` +
-          `current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&` +
-          `hourly=pressure_msl,uv_index,visibility,precipitation_probability&` +
-          `forecast_days=1&` +
-          `timezone=auto`
-      );
-
-      if (!weatherRes.ok) {
-        throw new Error(`Weather API error: ${weatherRes.status}`);
+      if (!locationData?.latitude || !locationData?.longitude) {
+        throw new Error("Invalid location data: Missing coordinates");
       }
 
-      const weatherData = await weatherRes.json();
+      const weatherApiUrl = new URL("https://api.open-meteo.com/v1/forecast");
+      weatherApiUrl.searchParams.append("latitude", locationData.latitude.toString());
+      weatherApiUrl.searchParams.append("longitude", locationData.longitude.toString());
+      weatherApiUrl.searchParams.append(
+        "current",
+        "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m"
+      );
+      weatherApiUrl.searchParams.append("hourly", "pressure_msl,uv_index,visibility,precipitation_probability");
+      weatherApiUrl.searchParams.append("forecast_days", "1");
+      weatherApiUrl.searchParams.append("timezone", "auto");
+
+      const weatherRes = await fetch(weatherApiUrl.toString());
+      const weatherData = (await weatherRes.json()) as WeatherAPIResponse;
+
+      if (!weatherData?.current) {
+        throw new Error("Invalid weather data received");
+      }
 
       let airQuality = {
         aqi: 0,
@@ -164,15 +204,19 @@ export class EnvironmentService {
       };
 
       try {
-        const airRes = await fetch(
-          `https://api.waqi.info/feed/geo:${locationData.latitude};${locationData.longitude}/` +
-            `?token=${process.env.WAQI_TOKEN}`
-        );
-        const airData = await airRes.json();
+        if (!process.env.WAQI_TOKEN) {
+          console.warn("Missing WAQI_TOKEN environment variable");
+          throw new Error("Missing WAQI_TOKEN");
+        }
 
-        if (airData.status === "ok") {
+        const airRes = await fetch(
+          `https://api.waqi.info/feed/geo:${locationData.latitude};${locationData.longitude}/?token=${process.env.WAQI_TOKEN}`
+        );
+        const airData = (await airRes.json()) as AirQualityAPIResponse;
+
+        if (airData.status === "ok" && airData.data) {
           airQuality = {
-            aqi: airData.data.aqi || 0,
+            aqi: airData.data.aqi,
             pm25: airData.data.iaqi?.pm25?.v || 0,
             pm10: airData.data.iaqi?.pm10?.v || 0,
             o3: airData.data.iaqi?.o3?.v || 0,
@@ -180,6 +224,10 @@ export class EnvironmentService {
             so2: airData.data.iaqi?.so2?.v || 0,
             co: airData.data.iaqi?.co?.v || 0,
           };
+
+          console.log("Parsed air quality data:", airQuality);
+        } else {
+          console.warn("Invalid air quality data format:", airData);
         }
       } catch (error) {
         console.error("Error fetching air quality data:", error);
@@ -227,6 +275,7 @@ export class EnvironmentService {
     } catch (error) {
       console.error("Error updating environment:", error);
       if (this.cache) {
+        console.warn("Using cached environmental data");
         return this.cache;
       }
       throw error;

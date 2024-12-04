@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+import { config } from "dotenv";
+import { resolve } from "path";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { marked } from "marked";
@@ -9,6 +12,19 @@ import { layout } from "./views/layout";
 import { renderEcosystem } from "./views/ecosystem";
 
 const app = new Hono();
+
+// Load environment variables
+const result = config({ path: resolve(__dirname, "../.env") });
+
+if (result.error) {
+  console.error("Error loading .env file:", result.error);
+  process.exit(1);
+}
+
+// Verify environment variables are loaded
+console.log("Environment variables loaded:", {
+  WAQI_TOKEN: process.env.WAQI_TOKEN ? "Present" : "Missing",
+});
 
 // Initialize services
 const locationService = new LocationService();

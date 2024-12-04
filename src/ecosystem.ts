@@ -41,6 +41,12 @@ interface EnvironmentalData {
   lastChecked: number;
 }
 
+interface SunCalcTimes {
+  sunrise: Date;
+  sunset: Date;
+  [key: string]: Date;
+}
+
 export class EcosystemData {
   private cache: EnvironmentalData | null = null;
   private readonly CACHE_FILE = join(__dirname, "../cache/ecosystem.json");
@@ -286,8 +292,10 @@ export class EcosystemData {
         console.error("Error fetching air quality data:", error);
       }
 
-      const times = suncalc.getTimes(new Date(), preciseCoords.lat, preciseCoords.lon);
+      const times: SunCalcTimes = suncalc.getTimes(new Date(), preciseCoords.lat, preciseCoords.lon);
       const moonIllum = suncalc.getMoonIllumination(new Date());
+
+      const dayLengthMs: number = times.sunset.getTime() - times.sunrise.getTime();
 
       this.cache = {
         location: {
@@ -315,7 +323,7 @@ export class EcosystemData {
           sunrise: times.sunrise.toLocaleTimeString(),
           sunset: times.sunset.toLocaleTimeString(),
           moonPhase: this.getMoonPhase(moonIllum.phase),
-          dayLength: this.formatDayLength(times.sunset - times.sunrise),
+          dayLength: this.formatDayLength(dayLengthMs),
         },
         lastChecked: Date.now(),
       };
