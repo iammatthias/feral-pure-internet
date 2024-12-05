@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
 const EARTH_RADIUS_MILES = 3959; // Earth's radius in miles
-const FUZZ_RADIUS_MILES = 20; // Maximum fuzzing radius in miles reduced from 50 to 20
+const FUZZ_RADIUS_MILES = 10; // Maximum fuzzing radius in miles
 
 export interface LocationData {
   latitude: number;
@@ -48,7 +48,6 @@ export class LocationService {
         const data = readFileSync(this.CACHE_FILE, "utf-8");
         console.log("Loading cache from:", this.CACHE_FILE);
         // console.log("Cache data:", data);
-        console.log("Cache data:");
         this.cache = JSON.parse(data);
       } else {
         console.log("No cache file found at:", this.CACHE_FILE);
@@ -63,7 +62,7 @@ export class LocationService {
   private saveCache() {
     try {
       console.log("Saving cache to:", this.CACHE_FILE);
-      console.log("Cache data:", JSON.stringify(this.cache));
+      //   console.log("Cache data:", JSON.stringify(this.cache));
       writeFileSync(this.CACHE_FILE, JSON.stringify(this.cache));
     } catch (error) {
       console.error("Error saving cache:", error);
@@ -180,18 +179,5 @@ export class LocationService {
         this.updatePromise = this.updateLocation();
       }
     }, this.UPDATE_INTERVAL);
-  }
-
-  // Add this new method to validate the API response
-  private isValidLocationData(data: any): data is LocationData {
-    return (
-      typeof data === "object" &&
-      typeof data.latitude === "number" &&
-      typeof data.longitude === "number" &&
-      typeof data.city === "string" &&
-      typeof data.region === "string" &&
-      typeof data.country_name === "string" &&
-      typeof data.timezone === "string"
-    );
   }
 }
