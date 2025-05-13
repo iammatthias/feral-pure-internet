@@ -11,7 +11,7 @@
     "./shared"
   ],
   "scripts": {
-    "dev:client": "cd client && bun run dev",
+    "dev:client": "cd client && bun run dev --host 0.0.0.0",
     "dev:server": "cd server && bun run dev",
     "dev:shared": "cd shared && bun run dev",
     "dev": "concurrently \"bun run dev:shared\" \"bun run dev:server\" \"bun run dev:client\"",
