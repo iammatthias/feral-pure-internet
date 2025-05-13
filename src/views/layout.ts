@@ -19,7 +19,7 @@ export const layout = (content: string) => `
       }
       
       body { 
-        max-width: 800px;
+        max-width: 700px;
         margin: 0;
         padding: 2rem;
         font-family: monospace;
