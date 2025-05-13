@@ -37,7 +37,7 @@ export const App = () => {
       <section>
         <h2>Etc</h2>
         <p>
-          This is part of <a href='https://pure-internet.com/'>PURE---INTERNET</a>, a collection of projects exploring
+          This is part of <a href='https://pure---internet.com'>PURE---INTERNET</a>, a collection of projects exploring
           novel web hosting.
         </p>
         <ul>
