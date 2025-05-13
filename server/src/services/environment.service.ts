@@ -1,9 +1,8 @@
-// src/services/environment/environment.service.ts
-
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import suncalc from "suncalc";
-import { LocationService } from "../location/location.service";
+import { LocationService } from "./location.service";
+import type { EnvironmentalData } from "@shared/types";
 
 interface WeatherAPIResponse {
   current: {
@@ -38,53 +37,14 @@ interface AirQualityAPIResponse {
   };
 }
 
-export interface EnvironmentalData {
-  location: {
-    latitude: number;
-    longitude: number;
-    region: string;
-    country: string;
-    timezone: string;
-    elevation: number;
-  };
-  weather: {
-    temperature: number;
-    feelsLike: number;
-    humidity: number;
-    pressure: number;
-    windSpeed: number;
-    windDirection: string;
-    condition: string;
-    uvIndex: number;
-    visibility: number;
-    precipitationProbability: number;
-  };
-  air: {
-    aqi: number;
-    pm25: number;
-    pm10: number;
-    o3: number;
-    no2: number;
-    so2: number;
-    co: number;
-  };
-  astronomy: {
-    sunrise: string;
-    sunset: string;
-    moonPhase: string;
-    dayLength: string;
-  };
-  lastChecked: number;
-}
-
 export class EnvironmentService {
   private cache: EnvironmentalData | null = null;
-  private readonly CACHE_FILE = join(__dirname, "../../../cache/ecosystem.json");
+  private readonly CACHE_FILE = join(process.cwd(), "cache", "ecosystem.json");
   private readonly UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
   private updatePromise: Promise<EnvironmentalData> | null = null;
 
   constructor(private locationService: LocationService) {
-    const cacheDir = join(__dirname, "../../../cache");
+    const cacheDir = join(process.cwd(), "cache");
     if (!existsSync(cacheDir)) {
       mkdirSync(cacheDir, { recursive: true });
     }
@@ -123,8 +83,8 @@ export class EnvironmentService {
       "WNW",
       "NW",
       "NNW",
-    ];
-    return directions[Math.round(degrees / 22.5) % 16];
+    ] as const;
+    return directions[Math.round(degrees / 22.5) % 16] || "N";
   }
 
   private getWeatherCondition(code: number): string {
@@ -159,8 +119,8 @@ export class EnvironmentService {
       "Waning Gibbous",
       "Last Quarter",
       "Waning Crescent",
-    ];
-    return phases[Math.round(phase * 8) % 8];
+    ] as const;
+    return phases[Math.round(phase * 8) % 8] || "Unknown";
   }
 
   private formatDayLength(milliseconds: number): string {
@@ -226,8 +186,6 @@ export class EnvironmentService {
             so2: airData.data.iaqi?.so2?.v || 0,
             co: airData.data.iaqi?.co?.v || 0,
           };
-
-          //   console.log("Parsed air quality data:", airQuality);
           console.log("Parsed air quality data");
         } else {
           console.warn("Invalid air quality data format:", airData);
@@ -239,10 +197,9 @@ export class EnvironmentService {
       const now = new Date();
       const times = suncalc.getTimes(now, locationData.latitude, locationData.longitude);
       const moonIllum = suncalc.getMoonIllumination(now);
-
       const dayLengthMs = times.sunset.getTime() - times.sunrise.getTime();
 
-      this.cache = {
+      const environmentalData: EnvironmentalData = {
         location: {
           latitude: locationData.latitude,
           longitude: locationData.longitude,
@@ -255,13 +212,13 @@ export class EnvironmentService {
           temperature: weatherData.current.temperature_2m,
           feelsLike: weatherData.current.apparent_temperature,
           humidity: weatherData.current.relative_humidity_2m,
-          pressure: weatherData.hourly.pressure_msl[0],
+          pressure: weatherData.hourly.pressure_msl[0] || 0,
           windSpeed: weatherData.current.wind_speed_10m,
           windDirection: this.getWindDirection(weatherData.current.wind_direction_10m),
           condition: this.getWeatherCondition(weatherData.current.weather_code),
-          uvIndex: weatherData.hourly.uv_index[0],
-          visibility: weatherData.hourly.visibility[0] / 1000,
-          precipitationProbability: weatherData.hourly.precipitation_probability[0],
+          uvIndex: weatherData.hourly.uv_index[0] || 0,
+          visibility: (weatherData.hourly.visibility[0] || 0) / 1000,
+          precipitationProbability: weatherData.hourly.precipitation_probability[0] || 0,
         },
         air: airQuality,
         astronomy: {
@@ -273,8 +230,9 @@ export class EnvironmentService {
         lastChecked: Date.now(),
       };
 
+      this.cache = environmentalData;
       this.saveCache();
-      return this.cache;
+      return environmentalData;
     } catch (error) {
       console.error("Error updating environment:", error);
       if (this.cache) {

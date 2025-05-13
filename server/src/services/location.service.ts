@@ -1,22 +1,10 @@
-// src/services/location/location.service.ts
-
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import type { LocationData } from "@shared/types";
 
 const EARTH_RADIUS_MILES = 3959; // Earth's radius in miles
 const FUZZ_RADIUS_MILES = 2; // Maximum fuzzing radius in miles
 
-export interface LocationData {
-  latitude: number;
-  longitude: number;
-  city: string;
-  region: string;
-  country_name: string;
-  timezone: string;
-  lastUpdated?: number;
-}
-
-// Add interface for ip-api.com response
 interface IpApiResponse {
   status: string;
   lat: number;
@@ -30,12 +18,12 @@ interface IpApiResponse {
 
 export class LocationService {
   private cache: LocationData | null = null;
-  private readonly CACHE_FILE = join(__dirname, "../../../cache/location.json");
+  private readonly CACHE_FILE = join(process.cwd(), "cache", "location.json");
   private readonly UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes
   private updatePromise: Promise<LocationData> | null = null;
 
   constructor() {
-    const cacheDir = join(__dirname, "../../../cache");
+    const cacheDir = join(process.cwd(), "cache");
     if (!existsSync(cacheDir)) {
       mkdirSync(cacheDir, { recursive: true });
     }
@@ -49,7 +37,6 @@ export class LocationService {
       if (existsSync(this.CACHE_FILE)) {
         const data = readFileSync(this.CACHE_FILE, "utf-8");
         console.log("Loading cache from:", this.CACHE_FILE);
-        // console.log("Cache data:", data);
         this.cache = JSON.parse(data);
       } else {
         console.log("No cache file found at:", this.CACHE_FILE);
@@ -64,7 +51,6 @@ export class LocationService {
   private saveCache() {
     try {
       console.log("Saving cache to:", this.CACHE_FILE);
-      //   console.log("Cache data:", JSON.stringify(this.cache));
       writeFileSync(this.CACHE_FILE, JSON.stringify(this.cache));
     } catch (error) {
       console.error("Error saving cache:", error);
@@ -72,17 +58,10 @@ export class LocationService {
   }
 
   private fuzzLocation(lat: number, lon: number): { latitude: number; longitude: number } {
-    // Generate a random distance up to FUZZ_RADIUS_MILES
     const radiusMiles = Math.random() * FUZZ_RADIUS_MILES;
-
-    // Generate a random angle in radians
     const angle = Math.random() * 2 * Math.PI;
-
-    // Convert distance to angular distance (radians)
     const angularDistance = radiusMiles / EARTH_RADIUS_MILES;
-
-    // Calculate fuzzy position using spherical geometry
-    const lat1 = lat * (Math.PI / 180); // convert to radians
+    const lat1 = lat * (Math.PI / 180);
     const lon1 = lon * (Math.PI / 180);
 
     const lat2 = Math.asin(
@@ -96,7 +75,6 @@ export class LocationService {
         Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
       );
 
-    // Convert back to degrees and normalize longitude to [-180, 180]
     return {
       latitude: lat2 * (180 / Math.PI),
       longitude: ((lon2 * (180 / Math.PI) + 540) % 360) - 180,
@@ -106,7 +84,6 @@ export class LocationService {
   private async updateLocation(): Promise<LocationData> {
     try {
       console.log("Attempting to update location data...");
-      // Using ip-api.com with specific fields to minimize response size
       const response = await fetch(
         "http://ip-api.com/json/?fields=status,message,lat,lon,city,regionName,country,timezone"
       );
@@ -118,8 +95,6 @@ export class LocationService {
       }
 
       console.log("Received new location data:");
-
-      // Fuzz the coordinates before storing
       const fuzzedCoords = this.fuzzLocation(data.lat, data.lon);
 
       const locationData: LocationData = {
@@ -153,8 +128,7 @@ export class LocationService {
     }
 
     const cacheAge = Date.now() - this.cache.lastUpdated;
-    // Update every 10 minutes
-    const shouldUpdate = cacheAge > 10 * 60 * 1000; // 10 minutes
+    const shouldUpdate = cacheAge > this.UPDATE_INTERVAL;
     console.log("Cache age:", Math.round(cacheAge / (60 * 1000)), "minutes,", "Update needed:", shouldUpdate);
     return shouldUpdate;
   }

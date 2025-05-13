@@ -1,0 +1,112 @@
+.ecosystem {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.timestamp {
+  font-family: inherit;
+  color: var(--timestamp-color, #888);
+  font-size: 0.95em;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.heading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.card {
+  padding: 1rem;
+  border: 1px solid light-dark(#2a2a2a, #f0f0f0);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+}
+
+.cardContent {
+  font-size: 0.9rem;
+}
+
+.cardContent small {
+  color: light-dark(#666, #999);
+}
+
+.error {
+  color: red;
+  padding: 1rem;
+  border: 1px solid red;
+  border-radius: 4px;
+}
+
+.loading {
+  padding: 1rem;
+  text-align: center;
+  color: light-dark(#666, #999);
+}
+
+.etcSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.etcList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-left: 1.2rem;
+  list-style: disc inside;
+}
+
+.etcList li {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+a {
+  color: light-dark(blue, pink);
+  word-break: break-all;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: light-dark(#0050b3, #ff69b4);
+  text-decoration: underline;
+}
+
+a:visited {
+  color: light-dark(purple, orange);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
