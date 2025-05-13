@@ -10,15 +10,14 @@ export const App = () => {
           pure internet
         </h1>
         <p>
-          Built using <a href='https://hono.dev/'>Hono</a>,{" "}
-          <a href='https://www.cloudflare.com/products/tunnel/'>Cloudflare Tunnels</a>, and a Raspberry Pi Zero W.
+          Built using <a href='https://bhvr.dev/'>bhvr</a> and a Raspberry Pi Zero 2.
         </p>
         <p>
-          The Raspberry Pi is powered by an{" "}
+          The Pi is powered by a{" "}
           <a href='https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B0DB6LQMKH'>
             Stealth Cam Sol-Pak
-          </a>
-          . This panel outputs 10v, so a buck converter is used to step the voltage down to 5v.
+          </a>{" "}
+          with a built in 300mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
         </p>
         <p>
           This is an <a href='https://github.com/iammatthias/feral-pure-internet'>open source</a> work in progress.
