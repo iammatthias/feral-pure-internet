@@ -1,3 +1,5 @@
+import { EnvironmentalData } from "../services/environment/environment.service";
+
 export const renderEcosystem = (data: EnvironmentalData) => `
     <p>Last checked: <span class="timestamp" data-time="${data.lastChecked}"></span></p>
     <h4>Location Data</h4>
