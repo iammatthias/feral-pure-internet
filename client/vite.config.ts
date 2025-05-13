@@ -18,5 +18,6 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    allowedHosts: ["feral.pure---internet.com"],
   },
 });
