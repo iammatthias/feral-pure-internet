@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "tsup src/index.ts --dts && cp -r src/content dist",
     "start": "node dist/index.js"
   },
   "dependencies": {
