@@ -1,4 +1,5 @@
-import * as dotenv from "dotenv";
+// src/index.ts
+
 import { config } from "dotenv";
 import { resolve } from "path";
 import { serve } from "@hono/node-server";
@@ -55,6 +56,14 @@ app.get("/api/location", async (c) => {
   return c.json(data);
 });
 
-serve(app, (info) => {
-  console.log(`Feral Pure Internet listening on http://localhost:${info.port}`);
-});
+const port = process.argv.find((arg) => arg.startsWith("--port="))?.split("=")[1] || "3000";
+
+serve(
+  {
+    fetch: app.fetch,
+    port: parseInt(port),
+  },
+  (info) => {
+    console.log(`Feral Pure Internet listening on http://localhost:${info.port}`);
+  }
+);

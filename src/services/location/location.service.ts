@@ -1,8 +1,10 @@
+// src/services/location/location.service.ts
+
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
 const EARTH_RADIUS_MILES = 3959; // Earth's radius in miles
-const FUZZ_RADIUS_MILES = 10; // Maximum fuzzing radius in miles
+const FUZZ_RADIUS_MILES = 2; // Maximum fuzzing radius in miles
 
 export interface LocationData {
   latitude: number;
@@ -29,7 +31,7 @@ interface IpApiResponse {
 export class LocationService {
   private cache: LocationData | null = null;
   private readonly CACHE_FILE = join(__dirname, "../../../cache/location.json");
-  private readonly UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
+  private readonly UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes
   private updatePromise: Promise<LocationData> | null = null;
 
   constructor() {
@@ -151,8 +153,8 @@ export class LocationService {
     }
 
     const cacheAge = Date.now() - this.cache.lastUpdated;
-    // Reduced update frequency to stay within rate limits
-    const shouldUpdate = cacheAge > 2 * 60 * 60 * 1000; // 2 hours
+    // Update every 10 minutes
+    const shouldUpdate = cacheAge > 10 * 60 * 1000; // 10 minutes
     console.log("Cache age:", Math.round(cacheAge / (60 * 1000)), "minutes,", "Update needed:", shouldUpdate);
     return shouldUpdate;
   }

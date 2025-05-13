@@ -2,7 +2,7 @@
 
 Built using [Hono](https://hono.dev/), [Cloudflare Tunnels](https://www.cloudflare.com/products/tunnel/), and a Raspberry Pi Zero W.
 
-The Raspberry Pi is powered by an Esprit Paradise solar panel (for now), which barely provides enough power and is supplemented by a small battery pack. Ideally the final form will be portable.
+The Raspberry Pi is powered by an [Stealth Cam Sol-Pak](https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B0DB6LQMKH). This panel outputs 10v, so a buck converter is used to step the voltage down to 5v.
 
 This is an [open source](https://github.com/iammatthias/feral-pure-internet) work in progress.
 
