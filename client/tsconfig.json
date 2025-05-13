@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["react", "react-dom"],
     "baseUrl": ".",
+    "outDir": "./dist",
     "paths": {
       "@client/*": ["src/*"],
       "@server/*": ["../server/src/*"],

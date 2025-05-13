@@ -155,6 +155,12 @@ export class EnvironmentService {
         throw new Error("Invalid weather data received");
       }
 
+      // Calculate astronomy data first
+      const now = new Date();
+      const times = suncalc.getTimes(now, locationData.latitude, locationData.longitude);
+      const moonIllum = suncalc.getMoonIllumination(now);
+      const dayLengthMs = times.sunset.getTime() - times.sunrise.getTime();
+
       let airQuality = {
         aqi: 0,
         pm25: 0,
@@ -168,7 +174,37 @@ export class EnvironmentService {
       try {
         if (!process.env.WAQI_TOKEN) {
           console.warn("Missing WAQI_TOKEN environment variable");
-          throw new Error("Missing WAQI_TOKEN");
+          // Return complete environmental data with default air quality values
+          return {
+            location: {
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              region: `${locationData.city}, ${locationData.region}`,
+              country: locationData.country_name,
+              timezone: locationData.timezone,
+              elevation: weatherData.elevation || 0,
+            },
+            weather: {
+              temperature: weatherData.current.temperature_2m,
+              feelsLike: weatherData.current.apparent_temperature,
+              humidity: weatherData.current.relative_humidity_2m,
+              pressure: weatherData.hourly.pressure_msl[0] || 0,
+              windSpeed: weatherData.current.wind_speed_10m,
+              windDirection: this.getWindDirection(weatherData.current.wind_direction_10m),
+              condition: this.getWeatherCondition(weatherData.current.weather_code),
+              uvIndex: weatherData.hourly.uv_index[0] || 0,
+              visibility: (weatherData.hourly.visibility[0] || 0) / 1000,
+              precipitationProbability: weatherData.hourly.precipitation_probability[0] || 0,
+            },
+            air: airQuality,
+            astronomy: {
+              sunrise: times.sunrise.toLocaleTimeString(),
+              sunset: times.sunset.toLocaleTimeString(),
+              moonPhase: this.getMoonPhase(moonIllum.phase),
+              dayLength: this.formatDayLength(dayLengthMs),
+            },
+            lastChecked: Date.now(),
+          };
         }
 
         const airRes = await fetch(
@@ -193,11 +229,6 @@ export class EnvironmentService {
       } catch (error) {
         console.error("Error fetching air quality data:", error);
       }
-
-      const now = new Date();
-      const times = suncalc.getTimes(now, locationData.latitude, locationData.longitude);
-      const moonIllum = suncalc.getMoonIllumination(now);
-      const dayLengthMs = times.sunset.getTime() - times.sunrise.getTime();
 
       const environmentalData: EnvironmentalData = {
         location: {
