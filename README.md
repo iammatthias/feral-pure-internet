@@ -1,128 +1,122 @@
 # feral.pure---internet.com
 
-This is an exploration of "pure internet".
+Built using [bhvr](https://bhvr.dev/) and a Raspberry Pi Zero 2.
 
-It is built using [bhvr](https://bhvr.dev/) and [Cloudflare Tunnels](https://www.cloudflare.com/products/tunnel/) to serve a single page of HTML from a Raspberry Pi Zero W.
+The Pi is powered by a [Stealth Cam Sol-Pak](https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B087S7XGS9) with a built in 300mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
 
-Soon, it will be solar powered, and the site will be available only when the sun is shining.
+This is an open source work in progress.
+
+## Tech Stack
+
+- bhvr\*\* (Bun + Hono + Vite + React)
+- Cloudflare Tunnel
+- Raspberry Pi Zero 2 W
+
+---
 
 ## Requirements
 
-- Raspberry Pi Zero W with Raspbian OS
-- Node.js v20+ (ARMv6)
-- PNPM package manager
-- GitHub account
-- Cloudflare account
-- WAQI API token (for air quality data)
+- Raspberry Pi Zero 2 W
+- Cloudflare account + domain
+- WAQI API token
 
 ## Local Development
 
 ```bash
-# Clone repository
 git clone https://github.com/iammatthias/feral-pure-internet.git
 cd feral-pure-internet
-
-# Install dependencies
-pnpm install
-
-# Configure environment
-cp .env.example .env
-# Add WAQI_TOKEN to .env
-
-# Start development server
-pnpm dev
+bun install          # installs client, server, shared
+cp .env.example .env # add WAQI_TOKEN to .env in server
+bun run dev -- --host 0.0.0.0 --port 5173
+# client  → http://localhost:5173
+# server  → http://localhost:3000/api/*
 ```
 
-## Raspberry Pi Deployment
+## Raspberry Pi Deployment
 
-1. Install Node.js (ARMv6):
+### 1 – Install Bun (64‑bit OS)
 
 ```bash
-curl -fsSL https://unofficial-builds.nodejs.org/download/release/v20.11.1/node-v20.11.1-linux-armv6l.tar.gz -o nodejs.tar.gz
-sudo tar -xzf nodejs.tar.gz -C /usr/local --strip-components=1
-rm nodejs.tar.gz
+curl -fsSL https://bun.sh/install | bash
+echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-2. Install PNPM and PM2:
+### 2 – Clone repository
 
 ```bash
-sudo npm i -g pnpm pm2
-```
-
-3. Setup application:
-
-```bash
-sudo mkdir -p /opt/feral
-sudo chown -R $USER:$USER /opt/feral
+sudo mkdir -p /opt/feral && sudo chown $USER:$USER /opt/feral
 cd /opt/feral
 git clone https://github.com/iammatthias/feral-pure-internet.git app
 cd app
-pnpm install
 ```
 
-4. Configure environment:
+### 3 – Build & copy bundle
 
 ```bash
-cp .env.example .env
-# Add WAQI_TOKEN to .env
+bun install
+bun run build                       # shared + client + server
+cp -r client/dist/* server/dist/client/
 ```
 
-5. Start application:
+### 4 – systemd service
 
-```bash
-pm2 start "pnpm dev" --name feral
-pm2 save
+```ini
+# /etc/systemd/system/feral.service
+[Unit]
+Description=Feral – serve compiled bundle on 3000
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=feral
+WorkingDirectory=/opt/feral/app
+Environment=WAQI_TOKEN=[TOKEN]
+ExecStart=/home/feral/.bun/bin/bun run server/dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-## Cloudflare Tunnel
-
-1. Install cloudflared:
-
 ```bash
-# Download and install
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm > cloudflared
-chmod +x cloudflared
-sudo mv cloudflared /usr/local/bin
+sudo systemctl daemon-reload
+sudo systemctl enable --now feral
 ```
 
-2. Configure tunnel:
+### 5 – Cloudflare Tunnel
 
 ```bash
-# Authenticate
-cloudflared login
-
-# Create tunnel
 cloudflared tunnel create feral
-cloudflared tunnel route dns feral your-domain.com
+cloudflared tunnel route dns feral feral.pure---internet.com
+```
 
-# Configure
-mkdir -p ~/.cloudflared
-cat > ~/.cloudflared/config.yml << EOF
-tunnel: YOUR_TUNNEL_ID
+`/etc/cloudflared/config.yml`
+
+```yaml
+tunnel: <TUNNEL_UUID>
+credentials-file: /etc/cloudflared/<TUNNEL_UUID>.json
+
 ingress:
-  - hostname: your-domain.com
+  - hostname: feral.pure---internet.com
     service: http://localhost:3000
   - service: http_status:404
-EOF
 ```
-
-3. Run as service:
 
 ```bash
-sudo mkdir -p /etc/cloudflared /root/.cloudflared
-sudo cp ~/.cloudflared/cert.pem /root/.cloudflared/
-sudo cp ~/.cloudflared/config.yml /etc/cloudflared/
-sudo cp ~/.cloudflared/*.json /root/.cloudflared/
-sudo cloudflared service install
-sudo systemctl start cloudflared
-sudo systemctl enable cloudflared
+sudo cp ~/.cloudflared/*.json /etc/cloudflared/
+sudo systemctl enable --now cloudflared
 ```
 
-## etc
+---
 
-- NFC
-  -- https://iammatthias.com/posts/1732585567703-pure-internet-bluesky
-  -- The idea here was simple. Store a data URL on an NFC tag. When scanned, the data URL is loaded in the browser. This fell apart because data URLs are not supported for top level navigation. The solution was to host minimal HTML on IPFS, and use JS to bootstrap a data URL from a url param into an iframe.
-- Bluesky
-  -- https://iammatthias.com/posts/1732585567703-pure-internet-bluesky
-  -- This was a fun experiment inspired by [Daniel Mangum's prior work](https://danielmangum.com/posts/this-website-is-hosted-on-bluesky/). It leverages a few pieces of Bluesky's underlying AtProtocol, namely the Personal Data Server (PDS) and content addressable blob storage.
+## Update Workflow on Pi
+
+```bash
+cd /opt/feral/app
+git pull --ff-only
+./build.sh
+sudo systemctl restart feral
+```
