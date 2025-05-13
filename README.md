@@ -2,7 +2,7 @@
 
 Built using [bhvr](https://bhvr.dev/) and a Raspberry Pi Zero 2.
 
-The Pi is powered by a [Stealth Cam Sol-Pak](https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B087S7XGS9) with a built in 300mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
+The Pi is powered by a [Stealth Cam Sol-Pak](https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B087S7XGS9) with a built in 3000mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
 
 This is an open source work in progress.
 

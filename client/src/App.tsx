@@ -17,7 +17,7 @@ export const App = () => {
           <a href='https://www.amazon.com/Stealth-Cam-Rechargeable-Insulated-Compatible/dp/B0DB6LQMKH'>
             Stealth Cam Sol-Pak
           </a>{" "}
-          with a built in 300mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
+          with a built in 3000mAh battery. It outputs 10v, so a buck converter is used to step down to 5v.
         </p>
         <p>
           This is an <a href='https://github.com/iammatthias/feral-pure-internet'>open source</a> work in progress.
