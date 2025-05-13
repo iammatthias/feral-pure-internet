@@ -88,7 +88,14 @@ export class LocationService {
         "http://ip-api.com/json/?fields=status,message,lat,lon,city,regionName,country,timezone"
       );
 
-      const data: IpApiResponse = await response.json();
+      const rawData = await response.json();
+
+      // Type validation
+      if (!this.isValidIpApiResponse(rawData)) {
+        throw new Error("Invalid response format from IP API");
+      }
+
+      const data = rawData as IpApiResponse;
 
       if (data.status !== "success") {
         throw new Error(`Location API error: ${data.message || "Unknown error"}`);
@@ -119,6 +126,23 @@ export class LocationService {
       }
       throw error;
     }
+  }
+
+  private isValidIpApiResponse(data: unknown): data is IpApiResponse {
+    if (!data || typeof data !== "object") return false;
+
+    const response = data as Partial<IpApiResponse>;
+
+    return (
+      typeof response.status === "string" &&
+      typeof response.lat === "number" &&
+      typeof response.lon === "number" &&
+      typeof response.city === "string" &&
+      typeof response.regionName === "string" &&
+      typeof response.country === "string" &&
+      typeof response.timezone === "string" &&
+      (response.message === undefined || typeof response.message === "string")
+    );
   }
 
   private shouldUpdate(): boolean {
